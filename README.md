@@ -1,3 +1,9 @@
+> **[Read the story in 90 seconds ->](https://threebeats.github.io/windows-server-doctor/)**
+>
+> Three backups on my laptop were lying about their age. One was off by 64 days.
+
+---
+
 # Windows Server Doctor
 
 **One script. Sixty seconds. Tells you what is broken and pretending not to be.**
