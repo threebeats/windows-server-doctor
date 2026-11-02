@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three backups on my laptop were lying about their age</title>
+<meta name="description" content="Copy-Item preserves the source file's timestamp. So a backup named with today's date can carry last month's body. Here's the 30-line fix, and the checks that catch the rest of the family.">
+<meta name="author" content="Elias Easton">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Three backups on my laptop were lying about their age">
+<meta property="og:description" content="A backup whose filename says one date and whose contents are from another. How it happens, how to catch it, and the 30-line fix.">
+<link rel="canonical" href="https://threebeats.github.io/windows-server-doctor/">
+<style>
+  :root{
+    --ink:#16181d; --muted:#5b6472; --line:#e3e6ec; --bg:#ffffff;
+    --accent:#1c4f8c; --warn:#8a3b2f; --ok:#1f6b45; --code-bg:#f5f6f8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --ink:#e8eaee; --muted:#9aa4b2; --line:#2a2f38; --bg:#12151a;
+           --accent:#6fa8dc; --warn:#e08b7c; --ok:#7bc49b; --code-bg:#1a1e25; }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:400 18px/1.68 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:0 22px;
+  }
+  main{max-width:680px; margin:0 auto; padding:56px 0 90px}
+  .kicker{
+    font:600 12.5px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    display:block; margin-bottom:18px;
+  }
+  h1{font-size:clamp(29px,5.2vw,42px); line-height:1.16; letter-spacing:-.02em; margin:0 0 18px; font-weight:750}
+  .standfirst{font-size:clamp(18px,2.4vw,21px); color:var(--muted); line-height:1.55; margin:0 0 26px}
+  .byline{font-size:14.5px; color:var(--muted); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:12px 0; margin:0 0 34px}
+  .byline b{color:var(--ink); font-weight:600}
+  h2{font-size:23px; letter-spacing:-.01em; margin:44px 0 12px; font-weight:700}
+  p{margin:0 0 18px}
+  strong{font-weight:650}
+  code{
+    font:400 .88em/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--code-bg); padding:.14em .4em; border-radius:4px;
+  }
+  pre{
+    background:var(--code-bg); border:1px solid var(--line); border-radius:9px;
+    padding:15px 17px; overflow-x:auto; margin:0 0 22px;
+    font:400 14px/1.62 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  pre code{background:none; padding:0; font-size:inherit}
+  .callout{
+    border-left:3px solid var(--accent); background:var(--code-bg);
+    padding:16px 20px; margin:0 0 24px; border-radius:0 7px 7px 0;
+  }
+  .callout p:last-child{margin-bottom:0}
+  table{width:100%; border-collapse:collapse; margin:0 0 24px; font-size:15.5px}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-weight:650; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+  td.bad{color:var(--warn); font-variant-numeric:tabular-nums; white-space:nowrap}
+  td.good{color:var(--ok); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .rule{
+    font-size:21px; line-height:1.45; font-weight:650; letter-spacing:-.01em;
+    border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);
+    padding:20px 0; margin:36px 0;
+  }
+  .cta{
+    border:1px solid var(--line); border-radius:11px; padding:22px 24px; margin:42px 0 0;
+    background:var(--code-bg);
+  }
+  .cta h3{margin:0 0 8px; font-size:19px}
+  .cta p{font-size:16px; color:var(--muted); margin:0 0 14px}
+  .cta p:last-child{margin:0}
+  a{color:var(--accent); text-underline-offset:2px}
+  footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font-size:14.5px; color:var(--muted)}
+  ol,ul{margin:0 0 20px; padding-left:22px}
+  li{margin-bottom:9px}
+</style>
+</head>
+<body>
+<main>
+
+<span class="kicker">Incident notes</span>
+
+<h1>Three backups on my laptop were lying about their age</h1>
+
+<p class="standfirst">One of them was off by 64 days. Another cost me a night of work, because I trusted the date in its filename instead of the date on the file.</p>
+
+<p class="byline">By <b>Elias Easton</b> &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; 90 seconds or your money back</p>
+
+<h2>The one that cost me a night</h2>
+
+<p>Halloween night, my service wouldn't start. I made a backup before touching anything — tidy, dated, exactly what you're supposed to do.</p>
+
+<p>It didn't fix anything. So I went to the obvious fallback: the previous config. The good one. The one that worked.</p>
+
+<pre><code>openclaw.json.bak-desire-20261031-164439</code></pre>
+
+<p>October 31st. Four days old. Reasonable.</p>
+
+<p>Except its actual modification time was <strong>October 12th</strong>.</p>
+
+<table>
+  <thead><tr><th>Backup file</th><th>Name claims</th><th>Actually written</th><th>Off by</th></tr></thead>
+  <tbody>
+    <tr><td><code>bak-desire-20261031</code></td><td class="bad">2026-10-31</td><td class="bad">2026-10-12</td><td class="bad">−19 days</td></tr>
+    <tr><td><code>bak-rebuild-20261101</code></td><td class="bad">2026-11-01</td><td class="bad">2026-10-31</td><td class="bad">−1 day</td></tr>
+    <tr><td><code>.env.bak-20261006</code></td><td class="bad">2026-10-06</td><td class="bad">2026-08-03</td><td class="bad">−64 days</td></tr>
+  </tbody>
+</table>
+
+<p>Three in one folder. I found the third one only because I'd written a checker for the first two.</p>
+
+<h2>Why this happens, in one line</h2>
+
+<div class="callout">
+  <p><strong><code>Copy-Item</code> preserves the source file's modification time.</strong> The <em>name</em> gets today's date. The <em>body</em> keeps last month's timestamp. And the name is the part that looks authoritative.</p>
+</div>
+
+<p>That's the whole bug. The tool copies the file perfectly — bytes intact, hash identical. It just carries the old timestamp along with it, like luggage you didn't pack.</p>
+
+<p>Nothing errors. Nothing warns. You get a backup that is <em>technically</em> a faithful copy and <em>practically</em> a document that lies about when the world looked like this.</p>
+
+<h2>The fix is one line</h2>
+
+<pre><code>Copy-Item $Path $dest -Force
+(Get-Item $dest).LastWriteTime = $now   # &lt;-- the whole fix</code></pre>
+
+<p>Write the name, then force the file's own timestamp to agree with it. Now the name and the body are the same fact, and neither can drift.</p>
+
+<p>If you'd rather not have a date to be wrong about at all, use the content hash instead. A file named by the SHA256 of its bytes can't lie — if the name is right, the contents are right, by construction.</p>
+
+<h2>But it's bigger than backups</h2>
+
+<p>Once I'd found it, I started recognising the shape everywhere. It's not "a bug in <code>Copy-Item</code>". It's a whole family:</p>
+
+<ol>
+  <li><strong>A config that parses but is invalid.</strong> Braces balance, so the file "loads" — and then the loader rejects a field and refuses to start. Went around that loop all night: the JSON was fine, which is not the same as the config being fine.</li>
+  <li><strong>A process that reports "online" and returns 401.</strong> The supervisor said healthy. The logs said it had been unauthorised for four days. Nobody was watching, because the status column was green.</li>
+  <li><strong>A state file that round-trips and matches nothing.</strong> Written correctly, read back, parsed without error — and every comparison silently failed. The filter could never be true. It looked like it was working, forever.</li>
+  <li><strong>A filename with a date you typed yourself.</strong> The one that started this.</li>
+</ol>
+
+<p class="rule">A system that reports status without checking reality is worse than no status at all — because you stop looking.</p>
+
+<h2>The six checks I now run</h2>
+
+<p>I wrote these as a script anyone can run on Windows. No install, no admin, no network, no telemetry. Six checks, one verdict, and an exit code you can wire into anything:</p>
+
+<table>
+  <thead><tr><th>#</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Config parses <em>and</em> survives the shapes loaders reject</td><td>the crash-loop class</td></tr>
+    <tr><td>2</td><td>Backup filenames vs real modification times</td><td>the lying-backup class</td></tr>
+    <tr><td>3</td><td>Logs scanned for auth errors in a time window</td><td>the "online but dead" class</td></tr>
+    <tr><td>4</td><td>State files written, read back, compared</td><td>the eaten-state class</td></tr>
+    <tr><td>5</td><td>Scheduled tasks that have never actually run</td><td>the scheduled-but-forgotten class</td></tr>
+    <tr><td>6</td><td>Disk headroom and runtime version</td><td>the boring ones that bite</td></tr>
+  </tbody>
+</table>
+
+<pre><code>.\doctor.ps1 -ConfigPath .\config.json -StateFiles .\state.json
+# exit 0 = clean   1 = warnings   2 = will not self-heal</code></pre>
+
+<p>It found the 19-day liar on a real machine. It also found the 64-day one, on a second run, after I'd already "fixed" the folder.</p>
+
+<h2>The six rules</h2>
+
+<ol>
+  <li><strong>Parse ≠ validate.</strong> Balanced brackets say nothing about whether the fields are real.</li>
+  <li><strong>Never trust a date you typed into a filename.</strong> Read the mtime.</li>
+  <li><strong>"Online" is not "working."</strong> Check what it's actually doing, not what the column says.</li>
+  <li><strong>Round-trip your state.</strong> Write it, read it, compare it — in a test, not in production.</li>
+  <li><strong>A filter that can never be true hides everything.</strong> Prove the condition can succeed before trusting silence.</li>
+  <li><strong>Write the record before you report.</strong> If the write fails, stay quiet — a missed alert is recoverable, a wrong one teaches people to ignore you.</li>
+</ol>
+
+<div class="cta">
+  <h3>Everything here is free</h3>
+  <p><strong>Code, writeup, all of it.</strong> Copy it, quote it, ship it in your own repo — no attribution needed.</p>
+  <p>
+    <a href="https://github.com/threebeats/windows-server-doctor">github.com/threebeats/windows-server-doctor</a><br>
+    <a href="https://github.com/threebeats/windows-server-doctor/releases/tag/v1.1">Download the zip</a>
+  </p>
+</div>
+
+<footer>
+  <p>I build small, tested things for Windows servers. If your setup lies to you and you've stopped trusting it — that's the kind of problem I like.</p>
+  <p>Written by Elias Easton. Run the checks yourself before believing any of this.</p>
+</footer>
+
+</main>
+</body>
+</html>
