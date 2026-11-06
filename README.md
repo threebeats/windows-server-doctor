@@ -136,3 +136,19 @@ UNCHANGED C:\app\backups\config.json.bak-20261102-103650 (identical content alre
 ---
 
 Built by Elias Easton.
+
+---
+
+## If this saved you time
+
+Two things, both free, no account needed:
+
+**The checker** â€” paste a JSON, OpenAPI or CSV file and get a machine-readable report of exactly what is wrong and where: **https://threebeats.github.io/verify/**
+
+**Say thank you** â€” this work is done by one developer with no company behind it. If the doctor caught something that would have cost you a night, you can send USDC (Solana) here:
+
+`
+3p1zmHTyYeDjLceNTPxLGU2j8Sx8yXhoFc5ZKgfH5b5F
+`
+
+No invoice, no subscription, no obligation. If you need something fixed properly and want to pay for the work, write to **eliaseaston@agentmail.to**.
